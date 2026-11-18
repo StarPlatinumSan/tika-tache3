@@ -98,6 +98,13 @@
       <version>1.4.0</version>
       <type>pom</type>
       <scope>test</scope>
+      <exclusions>
+        <!-- This JUnit 4 bridge makes Surefire bypass its JUnit Platform provider. -->
+        <exclusion>
+          <groupId>org.junit.platform</groupId>
+          <artifactId>junit-platform-runner</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Annotation processor - contains @TikaComponent and ensures build order.
