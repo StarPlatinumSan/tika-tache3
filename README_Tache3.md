@@ -161,14 +161,48 @@ Finalement, nous n'avons pas fusionné la pull request pour éviter d'ajouter vo
 
 ### 5.1 Comparaison avant-après
 
+### 5.1 Comparaison avant et après
+
+Pour vérifier les résultats, nous avons ajouté sept fichiers de démonstration dans tika-core/src/test/resources/semgrep-demo/. Chaque fichier représente un problème de sécurité différent.
+
+Nous avons ensuite relancé Semgrep avec la même version et les mêmes 188 règles.
+
+Le scan est passé de 85 alertes avant les modifications à 92 après, soit exactement 7 nouvelles alertes. Chaque exemple a été détecté par la règle attendue et aucune ancienne alerte n'a disparu.
+
+Notre premier scan historique comptait 86 alertes, mais il utilisait un commit plus ancien. Pour cette comparaison, nous avons donc utilisé le même point de départ pour les analyses avant et après.
+
 ### 5.2 Analyse des sept types de vulnérabilités
+
+Nous avons implémentés septs types de vulnérabilités à l'aide de conseils fournis notamment par notre IA local pour essayer de couvrir un maximum de problèmes de sécurité différents possibles tout en intégrant la matière et les fonctions de chaque problème avec sa méthode de détection.
+
+Parmis les vulnérabilités, nous avons le transport HTTP non sécurisé concernant les données envoyés qui ne sont pas chiffrés et peuvent être interceptés.
+
+Nous avions aussi l'hachage faible qui consiste à utiliser l'algorithme faible SHA-1 qui ne garantie plus l'authenticité.
+
+Ensuite nous avons la clé secrète dur JWT qui est directement écrite dans le code la rendant disponible à tout usager, contrairement à un fichier chiffré.
+
+Un fichier XML malveillant externe dit XXE qui pourrait pousser le programme à consulter des fichiers non autorisés.
+
+Un conteneur (docker) avec trop de permissions qui augmentent les chances qu'il soit compromis.
+
+Une absence de politique CSP qui facilite les attaques tel que les SQL injections et les injections de n'importe quel autre script.
+
+Des références Github Actions modifiable qui peut changer sans que le workflow ne soit modifié, engendrant des risques de sécurité évidents.
 
 ## 6. Action GitHub réutilisable : Rickroll
 
-### 6.1 Implémentation
+Nous n'avons malheureusement pas eu suffisamment de temps pour réaliser cette dernière partie du travail, qui consistait à créer une action GitHub réutilisable déclenchant un Rickroll lorsqu'un test échoue.
 
-### 6.2 Déclenchement sur un échec de test
-
-### 6.3 Résultats de validation
+Cette fonctionnalité reste donc non implémentée.
 
 ## 7. Conclusion
+
+Cette tâche nous a permis de nous familiariser davantage avec Github Actions, découvrir Semgrep et comprendre comment intégrer un outil de sécurité avec Actions pour éviter les problèmes liés à la mutation du code.
+
+Nous avons rencontrés plusieurs difficultés avec Maven et les tests Tika, mais on a toutefois pu construire un workflow et intégrer le système d'alertes et de bloquage de builds selon les différents niveaux d'erreurs.
+
+L'usage de l'IA générative pour la phase d'implémentation a fonctionné en tandem et de façon responsable pour assurer la compréhension et la vulgarisation de tout code qui a été généré afin de mener à bout un projet fiable avec une base de supervision et de rédaction propre du rapport.
+
+Nous avons également réussi à introduire sept exemples de problèmes de sécurité différents. Le nombre d'alertes est passé de 85 à 92, confirmant que Semgrep a détecté chacun de nos ajouts.
+
+Même si nous avons manqué de temps pour la partie Rickroll, de part les conflits de repos au travers du temps, nous avons fait de notre mieux avec le peu de temps qu'on a réussi à s'allouer avec les difficultés des dernières semaines que les deux avons eu pour soumettre un rendu du mieux possible.
