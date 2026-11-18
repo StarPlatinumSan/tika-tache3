@@ -2,7 +2,7 @@
 
 **Binôme :** BITULEANU Andrei, LITRE Paul
 **Cours :** IFT3913
-**Date :** [Date de remise]
+**Date :** 17/11/26
 
 ---
 
@@ -95,25 +95,75 @@ Les résultats du premier scan serviront de référence pour vérifier que notre
 
 ## 4. Intégration de Semgrep dans GitHub Actions
 
-*À compléter après l'implémentation du workflow.*
-
 ### 4.1 Configuration du workflow
+
+Nous avons modifié le workflow .github/workflows/main-jdk17-build.yml pour effectuer l'analyse de Semgrep avant l'exécution avec Maven. Comme dans l'industrie, le workflow se déclenche automatiquement en faisant un push sur la branche main dans Github Actions et lorsqu'on fait une pull request vers la branche. Dans le cas que Semgrep détecte une nouvelle alerte, le build échoue avant le début des tests.
+
+Nous avons décidé de garder Semgrep OSS 1.185.0 avec les 188 règles du premier scan pour avoir une configuration comparable pour les analyses.
+
+Bien qu'au départ on a essayé de créer un workflow indépendant pour éviter les dégâts, on a fini par opter vers le workflow Maven déjà existant. Ainsi, lorsqu'une nouvelle alerte est détectée le job build échoue dans Actions.
 
 ### 4.2 Détection des nouvelles alertes
 
-### 4.3 Validation sur GitHub
+Le dépot initial contenait 86 alertes après le premier scan avant de débuter comme établi plus haut et on voulait éviter que ces alertes bloquent le nouveau build avant nos modifications.
+
+Nous utilisons donc l'option --baseline-commit de Semgrep. Elle permet de comparer le code actuel avec un commit de référence afin de détecter les nouvelles alertes.
+
+Le script .semgrep/check.py a été développé avec une aide importante de Codex. Nous lui avons demandé d'automatiser cette comparaison et de gérer les différents résultats possibles. Il se reposa sur trois cas:
+
+Code 0 est retourné si aucune nouvelle alerte était détecté, permettant la poursuite du build.
+Code 1 roulait lorsqu'une nouvelle alerte était détectée, faisant échouer le build.
+Code 2 si une erreur technique entravait une analyse fiable, faisant également échouer le build.
+
+Nous avons choisi de bloquer toutes les nouvelles alertes Semgrep, indépendamment de leur gravité afin d'appliquer un contrôle strict. Le script vérifie également que le commit de référence est valide et que les règles utilisées correspondent à notre configuration initiale. Cela permet d'éviter les comparaisons incorrectes et de rendre les résultats davantage reproductibles.
+
+Pour vérifier le fonctionnement du script, nous avons réalisé plusieurs vérifications local, notamment en conservant une ancienne alerte, en ajoutant une nouvelle alerte et en corrigeant une alerte existante.
+
+Ces vérifications ont permis de confirmer les trois comportements attendus. L'utilisation de Codex a principalement servi à développer et ajuster l'implémentation technique, tandis que les résultats ont été gérés par les rapports et les returns du code.
+
+### 4.3 Problèmes rencontrés lors de la validation
+
+Lors des premières exécutions de GitHub Actions, nous avons rencontré plusieurs problèmes indépendants de Semgrep.
+
+Le premier venait d'Apache RAT, qui refusait certains fichiers de la tâche 2 et nos README à cause de leurs licences. Nous avons donc ajouté des exclusions ciblées dans les fichiers pom.xml, sans désactiver la vérification des licences. Le contrôle RAT a ensuite réussi localement sur les 124 modules Maven.
+
+Le deuxième problème concernait MetadataExtraTest.java. Le test utilisait un constructeur GregorianCalendar qui dépendait de la locale par défaut de la machine. 
+
+Nous avons ajouté Locale.ROOT pour rendre la locale explicite tout en conservant le fuseau UTC. Après cela, les 10 tests de la classe ont réussi et Forbidden APIs n'a détecté aucune violation.
+
+Lors d'une nouvelle exécution GitHub Actions, le build Maven a échoué après environ 40 minutes dans le module tika-pipes-s3-integration-tests. Le rapport Maven indiquait une erreur pendant les tests d'intégration S3.
+
+Ainsi, nous avons identifié le problème venant de l'accès à l'image Docker MinIO utilisé pour les tests. L'erreur HTTP 401 nous a poussé exclure temporairement ce module du build, mais en gardant son code, afin de pouvoir valider Semgrep par tous les moyens nécessaires.
+
+Nous sommes conscients que cette décision réduit la couverture des lignes des tests, mais elle ne change pas la règle de l'analyse Semgrep.
+
+Nous avons alors réalisé que la longue durée des Github Actions était dû au fait que l'on n'avait pas à analyser absolument toute la codebase et qu'isoler simplement tika-core était suffisant pour répondre aux critères de la tâche, rendant la réduction de la couverture des lignes dans le paragraphe plus haut obsolète, car elle respecte les règles.
+
+Cette modification a ensuite permis d'obtenir une exécution réussie sur Github Actions.
+
+### 4.4 Validation sur GitHub
+
+
+Le dernier résultat confirme le fonctionnement du workflow lorsque aucune nouvelle alerte Semgrep n'est détectée.
+
+Pour vérifier que Semgrep fonctionne correctement, nous avons créé une branche temporaire dans laquelle nous avons ajouté un fichier HTML contenant un lien HTTP non sécurisé.
+
+Nous avons ensuite ouvert une pull request vers main pour voir si GitHub Actions allait détecter ce problème.
+
+Le test a réussi : Semgrep a trouvé la nouvelle alerte et a automatiquement fait échouer le build avec le code 1, avant même que Maven commence ses tests.
+
+Nous avons obtenu le même résultat en local. Cela confirme que notre système bloque les nouvelles alertes et laisse passer celles qui existaient déjà.
+
+Finalement, nous n'avons pas fusionné la pull request pour éviter d'ajouter volontairement ce problème à notre projet. Nous avons également supprimé le pull request pour conserver une clareté dans l'histoire de Github Actions.
+
 
 ## 5. Comparaison des résultats et analyse des vulnérabilités
-
-*À compléter avec les résultats avant-après et l'analyse des sept types demandés.*
 
 ### 5.1 Comparaison avant-après
 
 ### 5.2 Analyse des sept types de vulnérabilités
 
 ## 6. Action GitHub réutilisable : Rickroll
-
-*À compléter après l'implémentation et la validation.*
 
 ### 6.1 Implémentation
 
@@ -122,5 +172,3 @@ Les résultats du premier scan serviront de référence pour vérifier que notre
 ### 6.3 Résultats de validation
 
 ## 7. Conclusion
-
-*À rédiger après les vérifications finales.*
