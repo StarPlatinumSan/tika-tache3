@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ public class MetadataExtraTest {
     private static final Property TEXT_BAG = Property.internalTextBag("test:textbag");
 
     private static Calendar utc(int y, int mo, int d, int h, int mi, int s) {
-        Calendar c = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        Calendar c = new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ROOT);
         c.clear();
         c.set(y, mo, d, h, mi, s);
         return c;
